@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketRadar — Setup Wizard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080c14; --bg2:#0d1320; --surf:#141c2e; --surf2:#1a2440;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0f4ff; --muted:#7a8aaa; --dim:#3d4f70;
+  --green:#00e5a0; --green2:rgba(0,229,160,0.1);
+  --red:#ff4d6d; --red2:rgba(255,77,109,0.1);
+  --amber:#ffb74d; --amber2:rgba(255,183,77,0.1);
+  --blue:#5b8fff; --blue2:rgba(91,143,255,0.12);
+  --mono:'DM Mono',monospace; --head:'Syne',sans-serif; --body:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;min-height:100vh;padding:0}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(91,143,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(91,143,255,0.025) 1px,transparent 1px);
+  background-size:40px 40px}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;height:52px;background:rgba(8,12,20,0.94);
+  backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-box{width:28px;height:28px;background:var(--blue);border-radius:7px;position:relative;overflow:hidden}
+.logo-box::after{content:'';position:absolute;bottom:3px;left:3px;right:3px;height:10px;
+  background:white;clip-path:polygon(0 100%,20% 35%,40% 65%,60% 15%,80% 45%,100% 5%,100% 100%)}
+.logo-name{font-family:var(--head);font-size:16px;font-weight:800}
+.logo-name span{color:var(--blue)}
+.progress-bar{display:flex;align-items:center;gap:6px}
+.prog-step{width:28px;height:4px;border-radius:2px;background:var(--surf2);transition:background 0.3s}
+.prog-step.done{background:var(--green)}
+.prog-step.active{background:var(--blue)}
+
+/* LAYOUT */
+.wizard{max-width:760px;margin:0 auto;padding:32px 20px 80px;position:relative;z-index:1}
+.step-header{margin-bottom:28px}
+.step-num{font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:1px;margin-bottom:6px}
+.step-title{font-family:var(--head);font-size:26px;font-weight:800;margin-bottom:8px}
+.step-desc{color:var(--muted);font-size:14px;line-height:1.6}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:14px;
+  display:flex;align-items:center;gap:8px}
+.card-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:11px;flex-shrink:0}
+.ci-blue{background:var(--blue2);color:var(--blue)}
+.ci-green{background:var(--green2);color:var(--green)}
+.ci-amber{background:var(--amber2);color:var(--amber)}
+
+/* FORM FIELDS */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:11px;font-family:var(--mono);color:var(--muted);
+  letter-spacing:0.3px;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);
+  font-family:var(--mono);outline:none;transition:border-color 0.2s}
+.field input::placeholder{color:var(--dim)}
+.field input:focus{border-color:var(--blue)}
+.field input.valid{border-color:var(--green)}
+.field input.error{border-color:var(--red)}
+.field-hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
+.field-hint a{color:var(--blue);text-decoration:none}
+.field-hint a:hover{text-decoration:underline}
+
+/* STATUS BADGES */
+.status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);
+  padding:3px 10px;border-radius:20px;margin-left:auto}
+.status.ok{background:var(--green2);color:var(--green);border:1px solid rgba(0,229,160,0.2)}
+.status.warn{background:var(--amber2);color:var(--amber);border:1px solid rgba(255,183,77,0.2)}
+.status.err{background:var(--red2);color:var(--red);border:1px solid rgba(255,77,109,0.2)}
+.status.pend{background:var(--surf2);color:var(--muted);border:1px solid var(--border)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.btn{padding:11px 22px;border-radius:9px;font-family:var(--head);font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:all 0.2s}
+.btn-primary{background:var(--blue);color:white}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.btn-secondary{background:var(--surf2);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+.btn-green{background:var(--green);color:#011a10}
+.btn-green:hover{filter:brightness(1.1)}
+
+/* CODE BLOCK */
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--text);
+  white-space:pre;overflow-x:auto;position:relative;line-height:1.7}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--surf);border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;
+  font-family:var(--body);transition:all 0.2s}
+.copy-btn:hover{background:var(--surf2);color:var(--text)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
+
+/* STEP SECTIONS */
+.section{display:none}
+.section.active{display:block}
+
+/* INSTRUCTION STEPS */
+.inst-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.inst-num{width:24px;height:24px;border-radius:50%;background:var(--blue2);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+  font-family:var(--mono);font-weight:500;flex-shrink:0;margin-top:1px}
+.inst-body{flex:1}
+.inst-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.inst-desc{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* SUCCESS */
+.success-box{background:var(--green2);border:1px solid rgba(0,229,160,0.2);border-radius:14px;
+  padding:28px;text-align:center;margin-bottom:20px}
+.success-icon{font-size:48px;margin-bottom:12px}
+.success-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--green);margin-bottom:8px}
+.success-desc{color:var(--muted);font-size:13px;line-height:1.6}
+
+/* TEST RESULT */
+.test-output{background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--green);
+  white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:10px;display:none}
+
+/* CHECKLIST */
+.check-row{display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--border)}
+.check-row:last-child{border-bottom:none}
+.check-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.check-label{flex:1;font-size:13px;color:var(--text)}
+.check-sub{font-size:11px;color:var(--muted)}
+
+/* WARNING */
+.warn-box{background:var(--amber2);border:1px solid rgba(255,183,77,0.2);border-radius:10px;
+  padding:12px 16px;font-size:12px;color:var(--amber);line-height:1.6;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="logo">
+    <div class="logo-box"></div>
+    <div class="logo-name">Market<span>Radar</span> <span style="color:var(--muted);font-weight:400;font-size:13px">— Setup Wizard</span></div>
+  </div>
+  <div class="progress-bar">
+    <div class="prog-step active" id="p1"></div>
+    <div class="prog-step" id="p2"></div>
+    <div class="prog-step" id="p3"></div>
+    <div class="prog-step" id="p4"></div>
+    <div class="prog-step" id="p5"></div>
+  </div>
+</nav>
+
+<div class="wizard">
+
+  <!-- ═══ STEP 1: CREDENTIALS ═══ -->
+  <div class="section active" id="step1">
+    <div class="step-header">
+      <div class="step-num">STEP 1 OF 5</div>
+      <div class="step-title">Paste your API keys</div>
+      <div class="step-desc">All keys stay in your browser — nothing is sent anywhere. This wizard generates config files you download and use locally.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-blue">🤖</div> Anthropic (Claude AI brain) <span class="status pend" id="st-anthropic">pending</span></div>
+      <div class="field">
+        <label>API KEY</label>
+        <input type="password" id="anthropic_key" placeholder="sk-ant-api03-..." oninput="validateKey(this,'anthropic_key','st-anthropic','sk-ant')">
+        <div class="field-hint">Get from: <a href="https://console.anthropic.com/api-keys" target="_blank">console.anthropic.com/api-keys</a> → Create Key</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-green">🗄️</div> Supabase (database) <span class="status pend" id="st-supabase">pending</span></div>
+      <div class="field">
+        <label>PROJECT URL</label>
+        <input type="text" id="supabase_url" placeholder="https://abcdefghij.supabase.co" oninput="validateSupabase()">
+        <div class="field-hint">Supabase Dashboard → Settings → API → Project URL</div>
+      </div>
+      <div class="field">
+        <label>ANON PUBLIC KEY</label>
+        <input type="password" id="supabase_anon" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="validateSupabase()">
+        <div class="field-hint">Supabase Dashboard → Settings → API → anon public</div>
+      </div>
+      <div class="field">
+        <label>SERVICE ROLE KEY (for bots)</label>
+        <input type="password" id="supabase_service" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="validateSupabase()">
+        <div class="field-hint">Supabase Dashboard → Settings → API → service_role (keep secret)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-amber">📈</div> Alpha Vantage (market data) <span class="status pend" id="st-av">pending</span></div>
+      <div class="field">
+        <label>API KEY</label>
+        <input type="text" id="av_key" placeholder="XXXXXXXXXXXXXXXX" oninput="validateKey(this,'av_key','st-av','',4)">
+        <div class="field-hint">Get from: <a href="https://www.alphavantage.co/support/#api-key" target="_blank">alphavantage.co</a> — free, instant</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-blue">📧</div> Email Alerts (optional but recommended)</div>
+      <div class="field">
+        <label>YOUR GMAIL ADDRESS</label>
+        <input type="email" id="email_from" placeholder="yourname@gmail.com">
+      </div>
+      <div class="field">
+        <label>WHERE TO SEND ALERTS</label>
+        <input type="email" id="email_to" placeholder="yourname@gmail.com">
+        <div class="field-hint">Can be same as above, or any email you check</div>
+      </div>
+      <div class="field">
+        <label>GMAIL APP PASSWORD</label>
+        <input type="password" id="gmail_pw" placeholder="xxxx xxxx xxxx xxxx">
+        <div class="field-hint">Gmail → Account → Security → 2-Step Verification → App passwords → Create one named "MarketRadar"</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep(2)" id="btn1">Generate config files →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: GENERATED FILES ═══ -->
+  <div class="section" id="step2">
+    <div class="step-header">
+      <div class="step-num">STEP 2 OF 5</div>
+      <div class="step-title">Your config files — ready to use</div>
+      <div class="step-desc">Copy each file exactly as shown. These have your real keys filled in.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-amber">📄</div> File 1 of 3 — .env (bot credentials)</div>
+      <div class="warn-box">⚠️ Save this as <strong>.env</strong> inside the <strong>bots/</strong> folder. Never commit this to GitHub — it's already in .gitignore.</div>
+      <div style="position:relative">
+        <div class="code-block" id="envFileContent"></div>
+        <button class="copy-btn" onclick="copyBlock('envFileContent',this)">Copy</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-green">🌐</div> File 2 of 3 — dashboard config (top of index.html)</div>
+      <div style="position:relative">
+        <div class="code-block" id="dashFileContent"></div>
+        <button class="copy-btn" onclick="copyBlock('dashFileContent',this)">Copy</button>
+      </div>
+      <div class="field-hint" style="margin-top:8px">Open <strong>dashboard/index.html</strong>, find the two lines near the top that say YOUR-PROJECT-ID and YOUR-ANON-PUBLIC-KEY, replace them with this.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-blue">⚙️</div> File 3 of 3 — GitHub Secrets (for the scheduler)</div>
+      <div style="position:relative">
+        <div class="code-block" id="ghSecretsContent"></div>
+        <button class="copy-btn" onclick="copyBlock('ghSecretsContent',this)">Copy</button>
+      </div>
+      <div class="field-hint" style="margin-top:8px">You'll add these one by one in: GitHub repo → Settings → Secrets and variables → Actions → New repository secret</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Files saved → next step →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: DATABASE ═══ -->
+  <div class="section" id="step3">
+    <div class="step-header">
+      <div class="step-num">STEP 3 OF 5</div>
+      <div class="step-title">Set up the database</div>
+      <div class="step-desc">Run the schema SQL in Supabase to create all tables. Takes 60 seconds.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-green">🗄️</div> Run this in Supabase SQL Editor</div>
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-body">
+          <div class="inst-title">Open Supabase Dashboard</div>
+          <div class="inst-desc">Go to <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--blue)">supabase.com/dashboard</a> → your project → <strong>SQL Editor</strong> (left sidebar)</div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-body">
+          <div class="inst-title">Click "New query"</div>
+          <div class="inst-desc">Top right of the SQL editor — gives you a blank query window</div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-body">
+          <div class="inst-title">Paste the schema and run</div>
+          <div class="inst-desc">Copy the full SQL below → paste into the query window → click <strong>Run</strong> (or press Ctrl+Enter)</div>
+        </div>
+      </div>
+      <div style="position:relative;margin-top:14px">
+        <div class="code-block" id="schemaPreview" style="max-height:220px;overflow-y:auto;font-size:11px">-- Loading schema...</div>
+        <button class="copy-btn" onclick="copyBlock('schemaPreview',this)">Copy all SQL</button>
+      </div>
+      <div class="inst-step" style="margin-top:14px">
+        <div class="inst-num">4</div>
+        <div class="inst-body">
+          <div class="inst-title">Verify: check Table Editor</div>
+          <div class="inst-desc">After running, go to <strong>Table Editor</strong> in left sidebar — you should see: stocks, signals, price_history, news, bot_runs, alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Tables created → next →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4: RUN THE BOT ═══ -->
+  <div class="section" id="step4">
+    <div class="step-header">
+      <div class="step-num">STEP 4 OF 5</div>
+      <div class="step-title">Run the bot for the first time</div>
+      <div class="step-desc">This is where everything comes to life. Open a terminal on your computer and run these commands.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-blue">💻</div> On your computer — open a Terminal (or Command Prompt)</div>
+
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-body">
+          <div class="inst-title">Create the project folder and get the files</div>
+          <div class="inst-desc">If you haven't already — create a folder called <strong>market-radar</strong> and put all the bot files inside a <strong>bots/</strong> subfolder. Make sure <strong>.env</strong> is in that bots/ folder.</div>
+        </div>
+      </div>
+
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-body">
+          <div class="inst-title">Install Python dependencies</div>
+          <div style="position:relative;margin-top:6px">
+            <div class="code-block">cd market-radar/bots
+pip install -r requirements.txt</div>
+            <button class="copy-btn" onclick="copyText('cd market-radar/bots\npip install -r requirements.txt',this)">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-body">
+          <div class="inst-title">Run the bot — first cycle</div>
+          <div style="position:relative;margin-top:6px">
+            <div class="code-block">python main_bot.py</div>
+            <button class="copy-btn" onclick="copyText('python main_bot.py',this)">Copy</button>
+          </div>
+          <div class="inst-desc" style="margin-top:8px">You'll see live output like this:</div>
+          <div class="code-block" style="color:var(--green);margin-top:8px;font-size:11px">==================================================
+MarketRadar bot cycle starting...
+Time: 2025-05-16 10:30 UTC
+==================================================
+Step 1/4: Fetching stock prices...
+  → 2222.SR...
+    Price: 28.50  RSI: 58.2  Change: +2.10%
+  → 1120.SR...
+    Price: 96.40  RSI: 62.1  Change: +1.70%
+  ✓ Prices fetched for 18 stocks
+
+Step 2/4: Fetching news headlines...
+  RSS: 47 articles
+  yfinance news: 24 articles
+  Total unique articles: 58
+
+Step 3/4: Generating AI signals via Claude...
+  Analysing 2222.SR (3 news items)...
+  2222.SR: BUY prob=88% target=31.20 conf=high
+  Analysing 1120.SR (1 news items)...
+  1120.SR: BUY prob=81% target=108.00 conf=high
+  ...
+  ✓ Generated 18 signals
+
+Step 4/4: Checking alert conditions...
+  2 signal(s) exceeded 75% threshold
+  ✓ Email alert sent
+
+==================================================
+Cycle complete in 42.3s — status: SUCCESS
+==================================================</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-amber">❓</div> If you see errors</div>
+      <div class="check-row">
+        <div class="check-icon">🔴</div>
+        <div><div class="check-label">ModuleNotFoundError</div><div class="check-sub">Run: pip install -r requirements.txt (again, in the bots/ folder)</div></div>
+      </div>
+      <div class="check-row">
+        <div class="check-icon">🔴</div>
+        <div><div class="check-label">AuthenticationError from Anthropic</div><div class="check-sub">Your ANTHROPIC_API_KEY in .env is wrong — check for spaces/extra characters</div></div>
+      </div>
+      <div class="check-row">
+        <div class="check-icon">🔴</div>
+        <div><div class="check-label">Supabase connection failed</div><div class="check-sub">Double-check SUPABASE_URL ends in .supabase.co and SUPABASE_SERVICE_KEY is the service_role key, not anon</div></div>
+      </div>
+      <div class="check-row">
+        <div class="check-icon">🟡</div>
+        <div><div class="check-label">No data for some stocks</div><div class="check-sub">Normal — yfinance occasionally fails. The bot handles it gracefully and continues</div></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(5)">Bot ran successfully → final step →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 5: DEPLOY & AUTOMATE ═══ -->
+  <div class="section" id="step5">
+    <div class="step-header">
+      <div class="step-num">STEP 5 OF 5</div>
+      <div class="step-title">Deploy dashboard + automate bots</div>
+      <div class="step-desc">Push to GitHub → Vercel auto-deploys your live dashboard. GitHub Actions runs the bots every 30 minutes forever.</div>
+    </div>
+
+    <div class="success-box">
+      <div class="success-icon">🚀</div>
+      <div class="success-title">You're almost live!</div>
+      <div class="success-desc">After this step, your MarketRadar will be running 24/7 at a real URL you can open on your phone from anywhere in Saudi Arabia.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-blue">📁</div> Push all files to GitHub</div>
+      <div style="position:relative">
+        <div class="code-block" id="gitCommands"></div>
+        <button class="copy-btn" onclick="copyBlock('gitCommands',this)">Copy</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-amber">🔐</div> Add secrets to GitHub (for the bot scheduler)</div>
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-body">
+          <div class="inst-title">Go to your GitHub repo → Settings → Secrets and variables → Actions</div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-body">
+          <div class="inst-title">Click "New repository secret" and add each of these:</div>
+          <div class="code-block" id="secretsList" style="margin-top:8px;font-size:11px;color:var(--amber)"></div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-body">
+          <div class="inst-title">Copy the workflow file to the right place</div>
+          <div class="inst-desc">Move <strong>github-actions/market-bot.yml</strong> → <strong>.github/workflows/market-bot.yml</strong> in your repo. GitHub Actions only reads from .github/workflows/</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-green">🌐</div> Deploy dashboard on Vercel</div>
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-body">
+          <div class="inst-title">Go to vercel.com → New Project → Import your GitHub repo</div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-body">
+          <div class="inst-title">Set Root Directory to: <strong>dashboard</strong></div>
+          <div class="inst-desc">Vercel will serve dashboard/index.html as your live site</div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-body">
+          <div class="inst-title">Click Deploy — your live URL appears in ~60 seconds</div>
+          <div class="inst-desc">URL will be something like: <strong>market-radar-yourname.vercel.app</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon ci-green">✅</div> Everything running — final checklist</div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">Bot ran manually on your computer</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">Signals visible in Supabase Table Editor → signals table</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">Dashboard deployed on Vercel — opens in browser</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">Dashboard shows real signals (not "Connecting...")</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">GitHub Actions workflow file in .github/workflows/</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">All 6 GitHub Secrets added</div></div></div>
+      <div class="check-row"><div class="check-icon">✅</div><div><div class="check-label">Got a test email alert (may take up to 30 min for first scheduled run)</div></div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="alert('You are live! Open your Vercel URL to see MarketRadar running with real AI signals.')">🎉 I am live!</button>
+      <button class="btn btn-secondary" onclick="goStep(1)">Start over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════════════
+let keys = {};
+let currentStep = 1;
+
+// ══ NAVIGATION ═════════════════════════════════════════════════
+function goStep(n) {
+  if (n === 2) collectKeys();
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  for (let i=1;i<=5;i++) {
+    const el = document.getElementById('p'+i);
+    el.className = 'prog-step' + (i<n?' done':i===n?' active':'');
+  }
+  currentStep = n;
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  if (n===2) generateFiles();
+  if (n===3) loadSchema();
+  if (n===5) generateGitCommands();
+}
+
+// ══ VALIDATION ═════════════════════════════════════════════════
+function validateKey(input, id, statusId, prefix='', minLen=20) {
+  const val = input.value.trim();
+  const el = document.getElementById(statusId);
+  if (val.length >= minLen && (!prefix || val.startsWith(prefix))) {
+    input.classList.remove('error'); input.classList.add('valid');
+    el.textContent = '✓ looks good'; el.className = 'status ok';
+  } else if (val.length > 0) {
+    input.classList.remove('valid'); input.classList.add('error');
+    el.textContent = '✗ check format'; el.className = 'status err';
+  } else {
+    input.classList.remove('valid','error');
+    el.textContent = 'pending'; el.className = 'status pend';
+  }
+}
+
+function validateSupabase() {
+  const url = document.getElementById('supabase_url').value.trim();
+  const anon = document.getElementById('supabase_anon').value.trim();
+  const svc  = document.getElementById('supabase_service').value.trim();
+  const el   = document.getElementById('st-supabase');
+  if (url.includes('.supabase.co') && anon.startsWith('eyJ') && svc.startsWith('eyJ')) {
+    el.textContent='✓ looks good'; el.className='status ok';
+  } else if (url||anon||svc) {
+    el.textContent='incomplete'; el.className='status warn';
+  }
+}
+
+// ══ COLLECT + GENERATE ════════════════════════════════════════
+function collectKeys() {
+  keys = {
+    anthropic:        document.getElementById('anthropic_key').value.trim(),
+    supabase_url:     document.getElementById('supabase_url').value.trim(),
+    supabase_anon:    document.getElementById('supabase_anon').value.trim(),
+    supabase_service: document.getElementById('supabase_service').value.trim(),
+    av_key:           document.getElementById('av_key').value.trim(),
+    email_from:       document.getElementById('email_from').value.trim(),
+    email_to:         document.getElementById('email_to').value.trim(),
+    gmail_pw:         document.getElementById('gmail_pw').value.trim(),
+  };
+}
+
+function generateFiles() {
+  // .env file
+  document.getElementById('envFileContent').textContent =
+`# MarketRadar — Bot Credentials
+# Save as: bots/.env
+
+ANTHROPIC_API_KEY=${keys.anthropic || 'PASTE_YOUR_ANTHROPIC_KEY'}
+SUPABASE_URL=${keys.supabase_url || 'https://YOUR_PROJECT.supabase.co'}
+SUPABASE_KEY=${keys.supabase_anon || 'PASTE_ANON_KEY'}
+SUPABASE_SERVICE_KEY=${keys.supabase_service || 'PASTE_SERVICE_KEY'}
+ALPHA_VANTAGE_KEY=${keys.av_key || 'PASTE_ALPHA_VANTAGE_KEY'}
+NEWS_API_KEY=
+ALERT_EMAIL_FROM=${keys.email_from || ''}
+ALERT_EMAIL_TO=${keys.email_to || ''}
+GMAIL_APP_PASSWORD=${keys.gmail_pw || ''}
+HIGH_PROBABILITY_ALERT_THRESHOLD=75
+BOT_RUN_INTERVAL_MINUTES=30`;
+
+  // dashboard config
+  document.getElementById('dashFileContent').textContent =
+`// Replace these two lines near the top of dashboard/index.html:
+
+const SUPABASE_URL  = '${keys.supabase_url || 'https://YOUR_PROJECT.supabase.co'}';
+const SUPABASE_ANON = '${keys.supabase_anon || 'PASTE_ANON_KEY'}';`;
+
+  // GitHub secrets list
+  const secretNames = [
+    ['ANTHROPIC_API_KEY',    keys.anthropic],
+    ['SUPABASE_URL',         keys.supabase_url],
+    ['SUPABASE_KEY',         keys.supabase_anon],
+    ['SUPABASE_SERVICE_KEY', keys.supabase_service],
+    ['ALPHA_VANTAGE_KEY',    keys.av_key],
+    ['ALERT_EMAIL_FROM',     keys.email_from],
+    ['ALERT_EMAIL_TO',       keys.email_to],
+    ['GMAIL_APP_PASSWORD',   keys.gmail_pw],
+  ];
+  document.getElementById('ghSecretsContent').textContent =
+    secretNames.map(([name, val]) =>
+      `Secret name: ${name}\nValue: ${val || '(paste your value)'}\n`
+    ).join('\n');
+
+  document.getElementById('secretsList').textContent =
+    secretNames.map(([name]) => `→ ${name}`).join('\n');
+}
+
+function loadSchema() {
+  document.getElementById('schemaPreview').textContent = `-- Run this in Supabase SQL Editor
+-- Supabase Dashboard → SQL Editor → New query → paste → Run
+
+CREATE TABLE IF NOT EXISTS stocks (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  name_ar TEXT,
+  market TEXT NOT NULL,
+  sector TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS signals (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  signal TEXT NOT NULL CHECK (signal IN ('buy','sell','watch')),
+  probability INTEGER NOT NULL,
+  price NUMERIC(12,4),
+  price_change NUMERIC(8,4),
+  target_price NUMERIC(12,4),
+  stop_loss NUMERIC(12,4),
+  rationale TEXT,
+  confidence TEXT,
+  rsi NUMERIC(6,2),
+  macd NUMERIC(10,4),
+  volume_ratio NUMERIC(8,4),
+  ma50 NUMERIC(12,4),
+  ma200 NUMERIC(12,4),
+  news_sentiment TEXT,
+  news_count INTEGER DEFAULT 0,
+  top_headline TEXT,
+  bot_version TEXT DEFAULT '1.0',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS price_history (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  date DATE NOT NULL,
+  open NUMERIC(12,4), high NUMERIC(12,4),
+  low NUMERIC(12,4), close NUMERIC(12,4),
+  volume BIGINT,
+  UNIQUE(symbol, date)
+);
+
+CREATE TABLE IF NOT EXISTS news (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT,
+  headline TEXT NOT NULL,
+  source TEXT,
+  url TEXT UNIQUE,
+  sentiment TEXT,
+  sentiment_score NUMERIC(4,3),
+  published_at TIMESTAMPTZ,
+  fetched_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS bot_runs (
+  id SERIAL PRIMARY KEY,
+  run_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  stocks_processed INTEGER DEFAULT 0,
+  duration_ms INTEGER,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS alerts (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  alert_type TEXT,
+  message TEXT,
+  probability INTEGER,
+  is_sent BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_signals_symbol  ON signals(symbol);
+CREATE INDEX IF NOT EXISTS idx_signals_created ON signals(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_news_symbol     ON news(symbol);
+
+CREATE OR REPLACE VIEW latest_signals AS
+SELECT DISTINCT ON (s.symbol)
+  s.*, st.name, st.name_ar, st.market, st.sector
+FROM signals s
+JOIN stocks st ON st.symbol = s.symbol
+ORDER BY s.symbol, s.created_at DESC;
+
+INSERT INTO stocks (symbol, name, name_ar, market, sector) VALUES
+  ('2222.SR','Saudi Aramco','أرامكو السعودية','saudi','Energy'),
+  ('1120.SR','Al Rajhi Bank','مصرف الراجحي','saudi','Banking'),
+  ('2010.SR','SABIC','سابك','saudi','Petrochemicals'),
+  ('1150.SR','Alinma Bank','مصرف الإنماء','saudi','Banking'),
+  ('7010.SR','STC','الاتصالات السعودية','saudi','Telecom'),
+  ('4030.SR','Mouwasat Medical','مواصفات','saudi','Healthcare'),
+  ('1050.SR','Saudi National Bank','البنك الأهلي','saudi','Banking'),
+  ('NVDA','NVIDIA',NULL,'global','Technology'),
+  ('MSFT','Microsoft',NULL,'global','Technology'),
+  ('TSLA','Tesla',NULL,'global','EV/Auto'),
+  ('XOM','ExxonMobil',NULL,'global','Energy'),
+  ('AAPL','Apple',NULL,'global','Technology'),
+  ('META','Meta Platforms',NULL,'global','Technology'),
+  ('AMZN','Amazon',NULL,'global','Technology')
+ON CONFLICT (symbol) DO NOTHING;
+
+SELECT 'MarketRadar schema created successfully!' AS result;`;
+}
+
+function generateGitCommands() {
+  document.getElementById('gitCommands').textContent =
+`# Run these in your terminal from the market-radar/ folder
+
+# 1. Initialize git (skip if already done)
+git init
+git remote add origin https://github.com/YOUR-USERNAME/market-radar.git
+
+# 2. Create .gitignore to protect your .env
+echo "bots/.env" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+
+# 3. Move the workflow file to the right place
+mkdir -p .github/workflows
+cp github-actions/market-bot.yml .github/workflows/market-bot.yml
+
+# 4. Add all files and push
+git add .
+git commit -m "MarketRadar: initial deployment"
+git branch -M main
+git push -u origin main
+
+# Vercel will auto-deploy within 60 seconds of the push`;
+}
+
+// ══ COPY HELPERS ═══════════════════════════════════════════════
+function copyBlock(id, btn) {
+  const text = document.getElementById(id).textContent;
+  copyText(text, btn);
+}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>

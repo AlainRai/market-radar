@@ -1,0 +1,10 @@
+anthropic==0.40.0
+yfinance==0.2.46
+supabase==2.9.1
+python-dotenv==1.0.1
+requests==2.32.3
+pandas==2.2.3
+numpy==2.0.2
+ta==0.11.0
+feedparser==6.0.11
+schedule==1.2.2
